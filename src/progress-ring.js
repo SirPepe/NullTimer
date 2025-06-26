@@ -5,7 +5,6 @@ export class ProgressRing extends HTMLElement {
   #shadow = this.attachShadow({ mode: "open" });
   @attr(int({ min: 0n })) accessor radius = 100n;
   @attr(int({ min: 0n })) accessor width = 1n;
-
   @attr(number({ min: 0 })) accessor max = 0;
   @attr(number({ min: 0 })) accessor value = 0;
 
@@ -18,26 +17,31 @@ export class ProgressRing extends HTMLElement {
   @init()
   @reactive()
   render() {
+    this.#shadow.firstChild.setAttribute(
+      "viewBox",
+      `0 0 ${this.radius} ${this.radius}`
+    );
     this.#shadow.adoptedStyleSheets[0].replaceSync(`:host {
   display: inline-block;
   width: ${this.radius}px;
   height: ${this.radius}px;
+  overflow: hidden;
 }
 svg {
   width: 100%;
   height: 100%;
+  --width: ${this.width}px;
   --value: ${this.value};
   --max: ${this.max};
-  --width: ${this.width}px;
-  --circumference: calc((100% - var(--width) * 4) * pi);
+  --circumference: calc((100% - var(--width) * 2) * pi);
   --percent: calc((100 / var(--max)) * var(--value));
 }
 circle {
-  stroke: red;
+  stroke: var(--ring-color, red);
   stroke-width: var(--width);
   stroke-dasharray: var(--circumference) var(--circumference);
   stroke-dashoffset: calc(var(--circumference) - (var(--percent) / 100) * var(--circumference));
-  r: calc(50% - var(--width) * 2);
+  r: calc(50% - var(--width));
   cx: 50%;
   cy: 50%;
   transform: rotate(-90deg);

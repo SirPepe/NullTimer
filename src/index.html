@@ -26,13 +26,13 @@
       </form>
     </div>
     <dialog>
+      <progress-ring
+        radius="300"
+        width="8"
+        max="100"
+        value="50"
+      ></progress-ring>
       <div class="dialog-ui">
-        <progress-ring
-          radius="300"
-          width="8"
-          max="100"
-          value="50"
-        ></progress-ring>
         <span class="phase"></span>
         <span class="countdown"></span>
         <form method="dialog">
@@ -44,55 +44,63 @@
       import "./progress-ring.js";
       const $ = (s) => document.querySelector(s);
       const params = new URLSearchParams(location.search);
-      const startAt = params.get("start");
-      const endAt = params.get("end");
-      const loadAt = Temporal.Now.plainDateTimeISO().round("minutes");
-      if (!startAt || !endAt) {
+      const start = params.get("start");
+      const end = params.get("end");
+      const loadAt = Temporal.Now.plainDateTimeISO().round("seconds");
+      if (!start || !end) {
         $("[name=start]").value = loadAt;
         $("[name=end]").value = loadAt;
       } else {
-        $("[name=start]").value = startAt;
-        $("[name=end]").value = endAt;
-        const start = Temporal.PlainDateTime.from(startAt);
-        const end = Temporal.PlainDateTime.from(endAt);
-        const isRunningOnPageLoad =
-          Temporal.PlainDateTime.compare(end, loadAt) !== -1;
-        if (isRunningOnPageLoad) {
+        $("[name=start]").value = start;
+        $("[name=end]").value = end;
+        const startAt = Temporal.PlainDateTime.from(start);
+        const endAt = Temporal.PlainDateTime.from(end);
+        const totalDuration = new Intl.DurationFormat("de-DE", {
+          style: "digital",
+          hours: "2-digit",
+        }).format(startAt.until(endAt));
+        // Timer running on page load?
+        if (Temporal.PlainDateTime.compare(endAt, loadAt) !== -1) {
           $("dialog").showModal();
         }
         window.requestAnimationFrame(function loop() {
+          const nowAt = Temporal.Now.plainDateTimeISO();
           const isCountingDown =
-            Temporal.PlainDateTime.compare(
-              Temporal.Now.plainDateTimeISO(),
-              start
-            ) === 1;
-          const isOver =
-            Temporal.PlainDateTime.compare(
-              Temporal.Now.plainDateTimeISO(),
-              end
-            ) === 1;
-          const duration = (isCountingDown ? end : start)
-            .since(Temporal.Now.plainDateTimeISO())
+            Temporal.PlainDateTime.compare(nowAt, startAt) === 1;
+          const isOver = Temporal.PlainDateTime.compare(nowAt, endAt) === 1;
+          const duration = (isCountingDown ? endAt : startAt)
+            .since(nowAt)
             .round("seconds");
           const durationString = new Intl.DurationFormat("de-DE", {
             style: "digital",
+            hours: "2-digit",
           }).format(duration.abs());
           const $countdown = $(".countdown");
           $countdown.innerHTML = durationString;
           $countdown.classList.toggle("isCountingDown", isCountingDown);
           $countdown.classList.toggle("isOver", isOver);
+
           if (!isCountingDown) {
-            $(
-              ".phase"
-            ).innerHTML = `Timer starts at <time class="starts">${start
+            const message = `<time>${totalDuration}</time> timer starts at <time>${startAt
               .toPlainTime()
               .toLocaleString()}</time>`;
+            $(".phase").innerHTML = message;
+            $("progress-ring").max = loadAt.until(startAt).total("seconds");
+            $("progress-ring").value = nowAt.until(startAt).total("seconds");
+            $("progress-ring").style = "--ring-color: #666";
           } else if (isOver) {
-            $(".phase").innerHTML = "Time over!";
+            const message = `<b class="over">Time's up!</b>`;
+            $(".phase").innerHTML = message;
+            $("progress-ring").max = $("progress-ring").value = 100;
+            $("progress-ring").style = "--ring-color: red";
           } else {
-            $(".phase").innerHTML = `Timer ends at <time class="ends">${end
+            const message = `<time>${totalDuration}</time> timer ends at <time>${endAt
               .toPlainTime()
               .toLocaleString()}</time>`;
+            $(".phase").innerHTML = message;
+            $("progress-ring").max = startAt.until(endAt).total("seconds");
+            $("progress-ring").value = startAt.until(nowAt).total("seconds");
+            $("progress-ring").style = "--ring-color: skyblue";
           }
           window.requestAnimationFrame(loop);
         });
