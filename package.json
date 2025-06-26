@@ -1,0 +1,19 @@
+{
+  "name": "timed-timer",
+  "version": "1.0.0",
+  "description": "A timer that starts at a particular time",
+  "type": "module",
+  "scripts": {
+    "dev": "parcel src/index.html"
+  },
+  "author": "peter@peterkroener.de",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@babel/core": "^7.27.4",
+    "@babel/plugin-proposal-decorators": "^7.27.1",
+    "parcel": "^2.15.4"
+  },
+  "dependencies": {
+    "@sirpepe/ornament": "^3.0.1"
+  }
+}

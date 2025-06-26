@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Timed timer</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="ui">
+      <h1>Timed Timer</h1>
+      <form method="get" action="/">
+        <p>
+          <label
+            ><span>Start at:</span> <input type="datetime-local" name="start"
+          /></label>
+        </p>
+        <p>
+          <label
+            ><span>End at:</span> <input type="datetime-local" name="end"
+          /></label>
+        </p>
+        <p>
+          <input type="submit" value="Set timer" />
+        </p>
+      </form>
+    </div>
+    <dialog>
+      <div class="dialog-ui">
+        <progress-ring
+          radius="300"
+          width="8"
+          max="100"
+          value="50"
+        ></progress-ring>
+        <span class="phase"></span>
+        <span class="countdown"></span>
+        <form method="dialog">
+          <input type="submit" value="↻" />
+        </form>
+      </div>
+    </dialog>
+    <script type="module">
+      import "./progress-ring.js";
+      const $ = (s) => document.querySelector(s);
+      const params = new URLSearchParams(location.search);
+      const startAt = params.get("start");
+      const endAt = params.get("end");
+      const loadAt = Temporal.Now.plainDateTimeISO().round("minutes");
+      if (!startAt || !endAt) {
+        $("[name=start]").value = loadAt;
+        $("[name=end]").value = loadAt;
+      } else {
+        $("[name=start]").value = startAt;
+        $("[name=end]").value = endAt;
+        const start = Temporal.PlainDateTime.from(startAt);
+        const end = Temporal.PlainDateTime.from(endAt);
+        const isRunningOnPageLoad =
+          Temporal.PlainDateTime.compare(end, loadAt) !== -1;
+        if (isRunningOnPageLoad) {
+          $("dialog").showModal();
+        }
+        window.requestAnimationFrame(function loop() {
+          const isCountingDown =
+            Temporal.PlainDateTime.compare(
+              Temporal.Now.plainDateTimeISO(),
+              start
+            ) === 1;
+          const isOver =
+            Temporal.PlainDateTime.compare(
+              Temporal.Now.plainDateTimeISO(),
+              end
+            ) === 1;
+          const duration = (isCountingDown ? end : start)
+            .since(Temporal.Now.plainDateTimeISO())
+            .round("seconds");
+          const durationString = new Intl.DurationFormat("de-DE", {
+            style: "digital",
+          }).format(duration.abs());
+          const $countdown = $(".countdown");
+          $countdown.innerHTML = durationString;
+          $countdown.classList.toggle("isCountingDown", isCountingDown);
+          $countdown.classList.toggle("isOver", isOver);
+          if (!isCountingDown) {
+            $(
+              ".phase"
+            ).innerHTML = `Timer starts at <time class="starts">${start
+              .toPlainTime()
+              .toLocaleString()}</time>`;
+          } else if (isOver) {
+            $(".phase").innerHTML = "Time over!";
+          } else {
+            $(".phase").innerHTML = `Timer ends at <time class="ends">${end
+              .toPlainTime()
+              .toLocaleString()}</time>`;
+          }
+          window.requestAnimationFrame(loop);
+        });
+      }
+    </script>
+  </body>
+</html>
