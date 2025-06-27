@@ -3,6 +3,7 @@ import { attr, define, init, int, number, reactive } from "@sirpepe/ornament";
 @define("progress-ring")
 export class ProgressRing extends HTMLElement {
   #shadow = this.attachShadow({ mode: "open" });
+  #internals = this.attachInternals();
   @attr(int({ min: 0n })) accessor radius = 100n;
   @attr(int({ min: 0n })) accessor width = 1n;
   @attr(number({ min: 0 })) accessor max = 0;
@@ -12,15 +13,29 @@ export class ProgressRing extends HTMLElement {
     super();
     this.#shadow.innerHTML = `<svg><circle fill="transparent" /></svg>`;
     this.#shadow.adoptedStyleSheets.push(new CSSStyleSheet());
+    this.#internals.role = "progressbar";
+    this.#internals.ariaValueMin = 0;
+  }
+
+  @init()
+  @reactive({ keys: ["max, value"] })
+  #updateAria() {
+    this.#internals.ariaValueMax = this.max;
+    this.#internals.ariaValueNow = this.value;
+  }
+
+  @init()
+  @reactive({ keys: ["radius"] })
+  #updateViewBox() {
+    this.#shadow.firstChild.setAttribute(
+      "viewBox",
+      `0 0 ${this.radius} ${this.radius}`
+    );
   }
 
   @init()
   @reactive()
   render() {
-    this.#shadow.firstChild.setAttribute(
-      "viewBox",
-      `0 0 ${this.radius} ${this.radius}`
-    );
     this.#shadow.adoptedStyleSheets[0].replaceSync(`:host {
   display: inline-block;
   width: ${this.radius}px;

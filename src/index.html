@@ -28,12 +28,12 @@
     <dialog>
       <progress-ring
         radius="300"
-        width="8"
+        width="10"
         max="100"
         value="50"
       ></progress-ring>
       <div class="dialog-ui">
-        <span class="phase"></span>
+        <span class="notice"></span>
         <span class="countdown"></span>
         <form method="dialog">
           <input type="submit" value="↻" />
@@ -42,68 +42,140 @@
     </dialog>
     <script type="module">
       import "./progress-ring.js";
-      const $ = (s) => document.querySelector(s);
+
+      const initAt = Temporal.Now.plainDateTimeISO().round("seconds");
       const params = new URLSearchParams(location.search);
       const start = params.get("start");
       const end = params.get("end");
-      const loadAt = Temporal.Now.plainDateTimeISO().round("seconds");
+
+      const startDateTimeInput = document.querySelector("[name=start]");
+      const endDateTimeInput = document.querySelector("[name=end]");
+
       if (!start || !end) {
-        $("[name=start]").value = loadAt;
-        $("[name=end]").value = loadAt;
+        startDateTimeInput.value = endDateTimeInput.value = initAt;
       } else {
-        $("[name=start]").value = start;
-        $("[name=end]").value = end;
+        startDateTimeInput.value = start;
+        endDateTimeInput.value = end;
         const startAt = Temporal.PlainDateTime.from(start);
         const endAt = Temporal.PlainDateTime.from(end);
-        const totalDuration = new Intl.DurationFormat("de-DE", {
-          style: "digital",
-          hours: "2-digit",
-        }).format(startAt.until(endAt));
-        // Timer running on page load?
-        if (Temporal.PlainDateTime.compare(endAt, loadAt) !== -1) {
-          $("dialog").showModal();
+
+        document.addEventListener("input", (evt) => {
+          if ([startDateTimeInput, endDateTimeInput].includes(evt.target)) {
+            const from = Temporal.PlainDateTime.from(startDateTimeInput.value);
+            const to = Temporal.PlainDateTime.from(endDateTimeInput.value);
+            if (Temporal.PlainDateTime.compare(to, from) !== 1) {
+              endDateTimeInput.setCustomValidity(
+                "End date must be after start date"
+              );
+            } else {
+              endDateTimeInput.setCustomValidity("");
+            }
+          }
+        });
+
+        // If a non-over timer is running on page load, show immediately
+        if (Temporal.PlainDateTime.compare(endAt, initAt) !== -1) {
+          document.querySelector("dialog").showModal();
         }
-        window.requestAnimationFrame(function loop() {
-          const nowAt = Temporal.Now.plainDateTimeISO();
-          const isCountingDown =
-            Temporal.PlainDateTime.compare(nowAt, startAt) === 1;
-          const isOver = Temporal.PlainDateTime.compare(nowAt, endAt) === 1;
-          const duration = (isCountingDown ? endAt : startAt)
-            .since(nowAt)
-            .round("seconds");
-          const durationString = new Intl.DurationFormat("de-DE", {
+
+        function* timeStream(startAt, endAt) {
+          const initAt = Temporal.Now.plainDateTimeISO();
+          while (true) {
+            const nowAt = Temporal.Now.plainDateTimeISO();
+            const isOver = Temporal.PlainDateTime.compare(nowAt, endAt) === 1;
+            if (isOver) {
+              return;
+            }
+            if (Temporal.PlainDateTime.compare(nowAt, startAt) === 1) {
+              yield endAt.until(nowAt);
+            } else {
+              yield nowAt.until(startAt);
+            }
+          }
+        }
+
+        async function* interleaveRaf(source) {
+          let frameId;
+          try {
+            while (true) {
+              const { value, done } = source.next();
+              if (done) {
+                return;
+              }
+              yield value;
+              const { resolve, promise } = Promise.withResolvers();
+              frameId = globalThis.requestAnimationFrame(resolve);
+              await promise;
+            }
+          } finally {
+            globalThis.cancelAnimationFrame(frameId);
+          }
+        }
+
+        function progressUpdater(initAt, startAt, endAt) {
+          const progress = document.querySelector("progress-ring");
+          const toStart = initAt.until(startAt);
+          const toEnd = startAt.until(endAt);
+          return function updateProgress(duration) {
+            if (duration.blank) {
+              progress.max = progress.value = 0;
+            } else if (duration.sign === 1) {
+              progress.max = toStart.total("seconds");
+              progress.value = duration.total("seconds");
+            } else if (duration.sign === -1) {
+              progress.max = toEnd.total("seconds");
+              progress.value = toEnd.add(duration).total("seconds");
+            }
+          };
+        }
+
+        function countdownUpdater() {
+          const countdown = document.querySelector(".countdown");
+          return function updateCountdown(duration) {
+            countdown.innerHTML = new Intl.DurationFormat("de-DE", {
+              style: "digital",
+              hours: "2-digit",
+            }).format(duration.round("seconds").abs());
+          };
+        }
+
+        function noticeUpdater(startAt, endAt) {
+          const notice = document.querySelector(".notice");
+          const totalDuration = new Intl.DurationFormat("de-DE", {
             style: "digital",
             hours: "2-digit",
-          }).format(duration.abs());
-          const $countdown = $(".countdown");
-          $countdown.innerHTML = durationString;
-          $countdown.classList.toggle("isCountingDown", isCountingDown);
-          $countdown.classList.toggle("isOver", isOver);
+          }).format(startAt.until(endAt));
+          return function updateNotice(duration) {
+            if (!duration) {
+              notice.innerHTML = `<b class="over">Time's up!</b>`;
+            } else if (duration.sign === 1) {
+              notice.innerHTML = `<time>${totalDuration}</time> timer starts at <time>${startAt
+                .toPlainTime()
+                .toLocaleString()}</time>`;
+            } else if (duration.sign === -1) {
+              notice.innerHTML = `<time>${totalDuration}</time> timer ends at <time>${endAt
+                .toPlainTime()
+                .toLocaleString()}</time>`;
+            }
+          };
+        }
 
-          if (!isCountingDown) {
-            const message = `<time>${totalDuration}</time> timer starts at <time>${startAt
-              .toPlainTime()
-              .toLocaleString()}</time>`;
-            $(".phase").innerHTML = message;
-            $("progress-ring").max = loadAt.until(startAt).total("seconds");
-            $("progress-ring").value = nowAt.until(startAt).total("seconds");
-            $("progress-ring").style = "--ring-color: #666";
-          } else if (isOver) {
-            const message = `<b class="over">Time's up!</b>`;
-            $(".phase").innerHTML = message;
-            $("progress-ring").max = $("progress-ring").value = 100;
-            $("progress-ring").style = "--ring-color: red";
-          } else {
-            const message = `<time>${totalDuration}</time> timer ends at <time>${endAt
-              .toPlainTime()
-              .toLocaleString()}</time>`;
-            $(".phase").innerHTML = message;
-            $("progress-ring").max = startAt.until(endAt).total("seconds");
-            $("progress-ring").value = startAt.until(nowAt).total("seconds");
-            $("progress-ring").style = "--ring-color: skyblue";
+        (async () => {
+          const updateCountdown = countdownUpdater();
+          const updateProgress = progressUpdater(initAt, startAt, endAt);
+          const updateNotice = noticeUpdater(startAt, endAt);
+          for await (const value of interleaveRaf(timeStream(startAt, endAt))) {
+            updateCountdown(value);
+            updateProgress(value);
+            updateNotice(value);
+            document.body.classList.toggle("isCountingUp", value.sign === 1);
+            document.body.classList.toggle("isCountingDown", value.sign === -1);
           }
-          window.requestAnimationFrame(loop);
-        });
+          document.body.classList.remove("isCountingUp", "isCountingDown");
+          document.body.classList.add("isOver");
+          updateNotice(null);
+          updateProgress(new Temporal.Duration());
+        })();
       }
     </script>
   </body>

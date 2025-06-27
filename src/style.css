@@ -47,6 +47,18 @@ body {
   padding: 0;
 }
 
+body.isCountingUp {
+  --countdown-color: #666;
+}
+
+body.isCountingDown {
+  --countdown-color: #fff;
+}
+
+body.isOver {
+  --countdown-color: #f00;
+}
+
 .ui {
   font-size: 4vmin;
   height: 100%;
@@ -109,6 +121,7 @@ progress-ring {
   width: 98vmin;
   height: 98vmin;
   transform: translate(-50%, -50%);
+  --ring-color: var(--countdown-color);
 }
 
 input {
@@ -130,7 +143,7 @@ input {
 }
 
 time,
-b.over {
+b {
   font-weight: bold;
   display: inline-block;
   background: #fff;
@@ -144,12 +157,6 @@ b.over {
 }
 
 .countdown {
-  color: #666;
   font-size: 17vmin;
-  &.isCountingDown {
-    color: white;
-  }
-  &.isOver {
-    color: red;
-  }
+  color: var(--countdown-color);
 }
