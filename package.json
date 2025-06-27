@@ -5,13 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "rm -rf dist && parcel src/index.html",
-    "build": "rm -rf dist && parcel build src/index.html"
+    "build": "rm -rf dist && parcel build --no-source-maps src/index.html"
   },
   "author": "peter@peterkroener.de",
   "license": "UNLICENSED",
+  "browserslist": "supports es6-module",
   "devDependencies": {
     "@babel/core": "^7.27.4",
     "@babel/plugin-proposal-decorators": "^7.27.1",
+    "@parcel/optimizer-data-url": "^2.15.4",
+    "@parcel/transformer-inline-string": "^2.15.4",
     "parcel": "^2.15.4"
   },
   "dependencies": {
