@@ -1,7 +1,7 @@
 {
-  "name": "timed-timer",
+  "name": "null-timer",
   "version": "1.0.0",
-  "description": "A timer that starts at a particular time",
+  "description": "A totally unremarkable timer PWA",
   "type": "module",
   "scripts": {
     "dev": "rm -rf dist && parcel src/index.html",
@@ -13,11 +13,13 @@
   "devDependencies": {
     "@babel/core": "^7.27.4",
     "@babel/plugin-proposal-decorators": "^7.27.1",
-    "@parcel/optimizer-data-url": "^2.15.4",
+    "@parcel/packager-raw-url": "^2.15.4",
     "@parcel/transformer-inline-string": "^2.15.4",
+    "@parcel/transformer-webmanifest": "^2.15.4",
     "parcel": "^2.15.4"
   },
   "dependencies": {
+    "@parcel/service-worker": "^2.15.4",
     "@sirpepe/ornament": "^3.0.1"
   }
 }
