@@ -187,7 +187,7 @@ async function run(startAt, endAt) {
   window.localStorage.removeItem("0timer-end");
 }
 
-document.addEventListener("submit", async (evt) => {
+document.addEventListener("submit", (evt) => {
   // Timer form (not the form for closing the dialog)
   if (evt.target.method !== "dialog") {
     evt.preventDefault();
