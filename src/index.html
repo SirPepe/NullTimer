@@ -4,35 +4,55 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="favicon" href="./favicon.ico" />
-    <link rel="manifest" href="./manifest.json" />
     <link rel="stylesheet" href="./main.css" />
     <title>NullTimer</title>
+    <meta name="description" content="Very basic timer" />
+    <link rel="apple-touch-icon" href="./icon-192.png" sizes="192x192" />
+    <meta name="theme-color" content="#ffffff" />
   </head>
   <body>
-    <div class="ui">
-      <h1>
-        <img src="./icon-192.png" alt="" />
-        NullTimer
-      </h1>
-      <form>
-        <p>
-          <label
-            ><span>Start at:</span>
-            <input type="datetime-local" name="start" step="1"
-          /></label>
-        </p>
-        <p>
-          <label
-            ><span>End at:</span>
-            <input type="datetime-local" name="end" step="1"
-          /></label>
-        </p>
-        <p>
-          <input type="submit" value="Set timer" />
-        </p>
-      </form>
-    </div>
+    <h1>
+      <img src="./icon-192.png" alt="" />
+      NullTimer
+    </h1>
+    <main>
+      <details name="ui" open>
+        <summary>Scheduled</summary>
+        <form>
+          <p>
+            <label
+              ><span>Start at:</span>
+              <input required type="datetime-local" name="start" step="1"
+            /></label>
+          </p>
+          <p>
+            <label
+              ><span>End at:</span>
+              <input required type="datetime-local" name="end" step="1"
+            /></label>
+          </p>
+          <p style="text-align: right">
+            <input type="submit" value="Set scheduled timer" />
+          </p>
+        </form>
+      </details>
+      <details name="ui">
+        <summary>Instant</summary>
+        <form>
+          <p>
+            <label
+              ><span>Duration:</span>
+              <input required type="time" name="time" value="00:45:00"
+            /></label>
+          </p>
+          <p style="text-align: right">
+            <input type="submit" value="Start instant timer" />
+          </p>
+        </form>
+      </details>
+    </main>
     <dialog>
+      <span class="screenLockStatus">SCRN LOCK</span>
       <progress-ring
         radius="300"
         width="13"
@@ -47,12 +67,6 @@
         </form>
       </div>
     </dialog>
-    <script type="module">
-      import "./progress-ring.js";
-      import "./main.js";
-      navigator.serviceWorker.register(new URL("sw.js", import.meta.url), {
-        type: "module",
-      });
-    </script>
+    <script type="module" src="index.js"></script>
   </body>
 </html>

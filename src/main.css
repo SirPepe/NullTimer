@@ -21,6 +21,10 @@
 :root {
   background: oklch(0% 0 0);
   color: oklch(100% 0 0);
+  --ok-color: oklch(80% 0.28 140);
+  --focus-color: oklch(80% 0.1 225);
+  --warn-color: oklch(87% 0.17 80);
+  --fail-color: oklch(64% 0.3 30);
   font-family: "B612", monospace;
   font-size: 2.75vmin;
   line-height: 1.5;
@@ -35,11 +39,14 @@ body {
 
 h1 {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto auto;
   align-items: center;
+  justify-items: center;
+  justify-content: center;
   gap: 0.5em;
+  font-size: 8vmin;
   img {
-    width: 1lh;
+    width: 0.8lh;
   }
 }
 
@@ -50,34 +57,70 @@ body.isCountingUp {
 
 body.isCountingDown {
   --countdown-color: oklch(100% 0 0);
-  --ring-color: oklch(80% 0.1 225);
+  --ring-color: var(--focus-color);
 }
 
 body.isOver {
-  --countdown-color: oklch(64% 0.3 30);
-  --ring-color: oklch(64% 0.3 30);
+  --countdown-color: var(--fail-color);
+  --ring-color: var(--fail-color);
+}
+
+body.screen-lock-status-released {
+  --screen-lock-status-color: var(--warn-color);
+}
+
+body.screen-lock-status-error {
+  --screen-lock-status-color: var(--fail-color);
+}
+
+body.screen-lock-status-locked {
+  --screen-lock-status-color: var(--ok-color);
+}
+
+p {
+  margin: 0;
+}
+
+details {
+  margin: 1em;
+  padding: 1em;
+  font-size: 3vmin;
+  border: 0.25em solid #777;
+  &[open] {
+    border-color: var(--focus-color);
+  }
+}
+
+summary {
+  text-transform: uppercase;
+  font-weight: bold;
+  padding: 1.5em 1em;
+  margin: -1em;
+}
+
+form {
+  display: grid;
+  margin: 1em 0;
+  gap: 1em;
+  p:last-child {
+    margin-bottom: -1em;
+  }
+}
+
+label {
+  display: grid;
+  grid-template-columns: 6em 1fr;
+  align-items: center;
+  gap: 0.5em;
 }
 
 .ui {
-  font-size: 5vmin;
   height: 100%;
   display: grid;
   grid-template-rows: auto auto;
   align-items: center;
   justify-items: center;
   align-content: center;
-}
-
-label {
-  display: grid;
-  gap: 0.5em;
-  span {
-    text-transform: uppercase;
-  }
-}
-
-input[type="submit"] {
-  margin-top: 2em;
 }
 
 dialog {
@@ -120,7 +163,6 @@ progress-ring {
   width: 98vmin;
   height: 98vmin;
   transform: translate(-50%, -50%);
-  filter: drop-shadow(0 0 1vmin rgba(from var(--ring-color) r g b / 0.5));
 }
 
 input {
@@ -131,14 +173,30 @@ input {
   border: 0.2em solid #666;
   background-color: oklch(0% 0 0);
   color: oklch(100% 0 0);
+  &:invalid {
+    border-color: var(--fail-color);
+    color: var(--fail-color);
+  }
   &:hover {
     border-color: oklch(100% 0 0);
   }
   &:focus {
     border-color: oklch(100% 0 0);
-    box-shadow: 0 0 0.5em oklch(80% 0.1 225);
-    outline: 0.25em solid oklch(80% 0.1 225);
+    outline: 0.25em solid var(--focus-color);
   }
+  &:invalid:focus {
+    border-color: oklch(100% 0 0);
+    outline: 0.25em solid var(--fail-color);
+  }
+}
+
+.screenLockStatus {
+  position: absolute;
+  top: 2vmin;
+  right: 2vmin;
+  font-size: 4vmin;
+  text-transform: uppercase;
+  color: var(--screen-lock-status-color);
 }
 
 time,
@@ -152,7 +210,7 @@ b {
 }
 
 b.over {
-  background: oklch(64% 0.3 30);
+  background: var(--fail-color);
   color: oklch(100% 0 0);
 }
 
